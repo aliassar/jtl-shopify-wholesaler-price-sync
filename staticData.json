@@ -1,0 +1,14 @@
+{
+  "priority": 0,
+  "status": 1,
+  "apply_to": 4,
+  "customer_tags": ["B2B"],
+  "exclude_from": 0,
+  "exc_customer_tags": [],
+  "exc_customers": "",
+  "exc_product_type": 0,
+  "exc_product_variants": [],
+  "start_date": null,
+  "end_date": null,
+  "customer_ids": []
+}

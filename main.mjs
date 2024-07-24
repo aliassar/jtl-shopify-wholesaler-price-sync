@@ -1,33 +1,65 @@
-// URL of the endpoint to send the request to
-const url = "https://b2b-solution-public-api.bsscommerce.com/api/v1/pl/get-by-id";
+import { fetchData, postPriceList, getId, getParentId } from './utils.mjs';
+import staticData from './staticData.json' with { type: "json" };
+import { BssApiConfig } from './config.mjs';
+import sql from 'mssql';
 
-// Data to be sent in the request body
-const data = { 
-  "domain": "92157f.myshopify.com", 
-  "accessKey": "AhWwCkg6wBV+wykIGUgoO/PlT1mOB91KSpat2RMSc10=" ,
-  "id": 188613
-};
 
-// Options for the fetch request
-const options = {
-  method: 'POST', // HTTP method
-  headers: {
-    'Content-Type': 'application/json' // Header indicating the content type
-  },
-  body: JSON.stringify(data) // Convert the data object to a JSON string
-};
+async function main() {
+  try {
+    const records = await fetchData();
 
-// Send the fetch request
-fetch(url, options)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok ' + response.statusText);
-    }
-    return response.json(); // Parse the JSON from the response
-  })
-  .then(responseData => {
-    console.log('Success:', JSON.stringify(responseData)); // Handle the response data
-  })
-  .catch(error => {
-    console.error('Error:', error); // Handle any errors
-  });
+    const selectedProducts = await Promise.all(records
+      .filter(record => !record.VaterArtikelSKU)
+      .map(async record => ({
+        product_id: await getId(record.ArtikelSKU),
+        discount_type: 0,
+        discount_value: record.Price
+      }))
+    );
+
+    const selectedVariants = await Promise.all(records
+      .filter(record => record.VaterArtikelSKU)
+      .map(async record => ({
+        product_id: await getParentId(record.ArtikelSKU),
+        variant_id: await getId(record.ArtikelSKU),
+        discount_type: 0,
+        discount_value: record.Price
+      }))
+    );
+
+    const priceListData1 = {
+      domain: BssApiConfig.domain,
+      accessKey: BssApiConfig.accessKey,
+      data: {
+        ...staticData,
+        id: 188606,
+        name: "First",
+		apply_at: 0,
+        selected_products: selectedProducts.filter( product => product.product_id ),
+        selected_variants: []
+      }
+    };
+
+    const priceListData2 = {
+      domain: BssApiConfig.domain,
+      accessKey: BssApiConfig.accessKey,
+      data: {
+        ...staticData,
+        id: 188613, 
+        name: "Second",
+        apply_at: 1,
+        selected_products: [],
+        selected_variants: selectedVariants.filter( variant => variant.product_id && variant.variant_id )
+      }
+    };
+    await postPriceList(priceListData1);
+    await postPriceList(priceListData2);
+	
+  } catch (err) {
+	  console.log(err)
+  } finally {
+    await sql.close();
+  }
+}
+
+export default main

@@ -2,6 +2,9 @@ import sql from 'mssql';
 import axios from 'axios';
 import { sqlConfig, BssApiConfig, shopify, shopifySession } from './config.mjs';
 import { sqlQuery, shopifyQuery } from './query.mjs';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 let skuToIdMapper;
 let isInitialized = false;
@@ -102,12 +105,63 @@ export async function getParentId(ArtikelSKU){
 
 export async function postPriceList(data) {
   try {
-	 //console.log(data.data.selected_products)
-	 //console.log(data.data.selected_variants)
     const response = await axios.post(BssApiConfig.url, data);
 	console.log('API Response:', response.data);
-  } catch (err) {
-    console.error('API request failed:', err);
-    throw err;
+  } catch (error) {
+    if (error.response) {
+      console.log('Error data:', error.response.data);
+      console.log('Error status:', error.response.status);
+      console.log('Error headers:', error.response.headers);
+    } else if (error.request) {
+      console.log('Error request:', error.request);
+	}
   }
 }
+
+
+
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const RETRY_FILE_PATH = path.join(__dirname, 'nextRetry.txt');
+
+const getRetryTimestamp = async () => {
+  try {
+    const data = await fs.readFile(RETRY_FILE_PATH, 'utf8');
+    return parseInt(data, 10);
+  } catch (error) {
+    // If file doesn't exist or can't be read, consider no retry scheduled
+    return null;
+  }
+};
+
+const setRetryTimestamp = async (timestamp) => {
+  await fs.writeFile(RETRY_FILE_PATH, timestamp.toString(), 'utf8');
+};
+
+export async function commit (url, options)  {
+  const now = Date.now();
+  const nextRetry = await getRetryTimestamp();
+
+  if (nextRetry && now < nextRetry) {
+    console.log('A retry is already scheduled. Exiting early.');
+    return;
+  }
+
+  try {
+    const {domain, accessKey} = BssApiConfig
+	const response = await axios.post(BssApiConfig.uploadUrl,{domain, accessKey});
+	console.log('API Response:', response.data);
+  } catch (error) {
+    if (error.response && error.response.status === 429) {
+      const retryAfter = 330000; // 5 minutes and 30 seconds
+      const newRetryTime = Date.now() + retryAfter;
+      console.log('Received 429 error. Retrying in 5 minutes and 30 seconds...');
+      await setRetryTimestamp(newRetryTime);
+      return;
+    } else {
+      throw error;
+    }
+  }
+};

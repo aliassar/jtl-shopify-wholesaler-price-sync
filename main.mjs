@@ -1,4 +1,4 @@
-import { fetchData, postPriceList, getId, getParentId } from './utils.mjs';
+import { fetchData, postPriceList, getId, getParentId, commit } from './utils.mjs';
 import staticData from './staticData.json' with { type: "json" };
 import { BssApiConfig } from './config.mjs';
 import sql from 'mssql';
@@ -17,6 +17,7 @@ async function main() {
       }))
     );
 
+
     const selectedVariants = await Promise.all(records
       .filter(record => record.VaterArtikelSKU)
       .map(async record => ({
@@ -31,7 +32,8 @@ async function main() {
       domain: BssApiConfig.domain,
       accessKey: BssApiConfig.accessKey,
       data: {
-        ...staticData,
+		  ...staticData,
+		start_date: new Date().toISOString(),
         id: 188606,
         name: "First",
 		apply_at: 0,
@@ -44,7 +46,8 @@ async function main() {
       domain: BssApiConfig.domain,
       accessKey: BssApiConfig.accessKey,
       data: {
-        ...staticData,
+		  ...staticData,
+		start_date: new Date().toISOString(),
         id: 188613, 
         name: "Second",
         apply_at: 1,
@@ -54,6 +57,7 @@ async function main() {
     };
     await postPriceList(priceListData1);
     await postPriceList(priceListData2);
+	await commit()
 	
   } catch (err) {
 	  console.log(err)

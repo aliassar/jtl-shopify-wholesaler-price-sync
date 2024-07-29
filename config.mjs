@@ -19,6 +19,7 @@ export const BssApiConfig = {
   url: 'https://b2b-solution-public-api.bsscommerce.com/api/v1/pl/save',
   domain: process.env.SHOPIFY_STORE,
   accessKey: process.env.BSS_API_ACCESS_KEY,
+  uploadUrl: 'https://b2b-solution-public-api.bsscommerce.com/api/v1/pl/rule/upload'
 };
 
 export const shopifyConfig = {

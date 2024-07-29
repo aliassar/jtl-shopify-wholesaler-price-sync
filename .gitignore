@@ -1,2 +1,5 @@
-node_modules
+/node_modules/
 .env
+nextRetry.txt
+logfile.txt
+run_script.bat

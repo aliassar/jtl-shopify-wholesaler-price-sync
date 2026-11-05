@@ -10,9 +10,9 @@
   "description": "",
   "dependencies": {
     "@shopify/shopify-api": "^11.1.0",
-    "axios": "^1.7.2",
+    "axios": "^1.21.0",
     "dotenv": "^16.4.5",
     "mssql": "^11.0.1",
-    "node-cron": "^3.0.3"
+    "node-cron": "^4.6.0"
   }
 }

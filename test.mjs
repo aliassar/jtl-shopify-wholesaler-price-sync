@@ -1,9 +1,10 @@
 import axios from 'axios';
-const data = 
-{
-  "domain": "your-store.myshopify.com", 
-  "accessKey": "YOUR_BSS_ACCESS_KEY",
-  "id": 188606
+import { BssApiConfig } from './config.mjs';
+// price list id to look up; domain and key come from .env like the rest of the app
+const data = {
+  domain: BssApiConfig.domain,
+  accessKey: BssApiConfig.accessKey,
+  id: Number(process.env.BSS_TEST_PRICE_LIST_ID ?? 188606)
 }
 
 try {
